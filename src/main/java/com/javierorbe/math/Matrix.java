@@ -22,12 +22,12 @@
 
 package com.javierorbe.math;
 
-import com.javierorbe.math.util.BiFunction;
 import com.javierorbe.math.util.IntPair;
 import com.javierorbe.math.util.MathUtils;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
