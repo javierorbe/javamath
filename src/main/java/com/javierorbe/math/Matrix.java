@@ -326,18 +326,17 @@ public class Matrix {
     }
 
     /**
-     * Returns the transpose of a matrix.
+     * Returns the transpose of this matrix.
      *
-     * @param matrix the matrix to transpose.
      * @return the transposed matrix.
      * @see <a href="https://en.wikipedia.org/wiki/Transpose" target="_top">Transpose in Wikipedia</a>
      */
-    public static Matrix transpose(Matrix matrix) {
-        Matrix result = new Matrix(matrix.cols, matrix.rows);
+    public Matrix transpose() {
+        Matrix result = new Matrix(cols, rows);
 
-        for (int i = 0; i < matrix.rows; i++) {
-            for (int j = 0; j < matrix.cols; j++) {
-                result.values[j][i] = matrix.values[i][j];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                result.values[j][i] = values[i][j];
             }
         }
 
@@ -882,7 +881,7 @@ public class Matrix {
                 throw new InvalidMatrixException("The matrix must be invertible.");
             }
 
-            Matrix result = Matrix.transpose(matrix.getAdjugate());
+            Matrix result = matrix.getAdjugate().transpose();
             result.multiply((1 / matrix.getDeterminant()));
 
             return result;

@@ -63,10 +63,6 @@ public class MatrixTest {
     }
 
     @Test
-    public void randomize() {
-    }
-
-    @Test
     public void addScalar() {
         double[][] matrixValues = new double[][]{
                 {-3, 2, 1},
@@ -218,6 +214,18 @@ public class MatrixTest {
 
     @Test
     public void getIdentity() {
+        Matrix identity2 = Matrix.getIdentity(2);
+        Assert.assertEquals(new Matrix(new double[][] {
+                {1, 0},
+                {0, 1}
+        }), identity2);
+
+        Matrix identity3 = Matrix.getIdentity(3);
+        Assert.assertEquals(new Matrix(new double[][] {
+                {1, 0, 0},
+                {0, 1, 0},
+                {0, 0, 1}
+        }), identity3);
     }
 
     @Test
@@ -244,6 +252,19 @@ public class MatrixTest {
 
     @Test
     public void isInvertible() {
+        Matrix m1 = new Matrix(new double[][]{
+                {1, 0, 0},
+                {0, 1, 0},
+                {0, 0, 1}
+        });
+        Assert.assertTrue(m1.isInvertible());
+
+        Matrix m2 = new Matrix(new double[][]{
+                {2, -1, 0},
+                {1,  0, 1},
+                {3,  2, 7}
+        });
+        Assert.assertFalse(m2.isInvertible());
     }
 
     @Test
@@ -252,10 +273,22 @@ public class MatrixTest {
 
     @Test
     public void getMinor() {
+
     }
 
     @Test
     public void getAdjugate() {
+        Matrix m = new Matrix(new double[][]{
+                {2, -1, 0},
+                {1,  0, 1},
+                {3,  2, 7}
+        });
+
+        double ad11 = m.getAdjugate(1, 1);
+        Assert.assertEquals(0, Double.compare(14, ad11));
+
+        double ad02 = m.getAdjugate(0, 2);
+        Assert.assertEquals(0, Double.compare(2, ad02));
     }
 
     @Test
@@ -310,11 +343,41 @@ public class MatrixTest {
 
     @Test
     public void transpose() {
+        Matrix m = new Matrix(new double[][]{
+                {2,  1, 3,  2},
+                {3,  2, 5,  1},
+                {-1, 1, 0, -7},
+                {3, -2, 1, 17},
+                {0,  1, 1,  -4}
+        });
 
+        Matrix transposed = m.transpose();
+
+        Assert.assertEquals(new Matrix(new double[][]{
+                {2, 3, -1, 3, 0},
+                {1, 2, 1, -2, 1},
+                {3, 5, 0, 1, 1},
+                {2, 1, -7, 17, -4}
+        }), transposed);
     }
 
     @Test
     public void toArray() {
+        Matrix m = new Matrix(new double[][]{
+                {1},
+                {2},
+                {3},
+                {4},
+                {5}
+        });
+
+        double[] columnArr = m.toArray();
+        double[] expected = new double[] {1, 2, 3, 4, 5};
+
+        Assert.assertEquals(expected.length, columnArr.length);
+        for (int i = 0; i < columnArr.length; i++) {
+            Assert.assertEquals(0, Double.compare(expected[i], columnArr[i]));
+        }
     }
 
     @Test
@@ -323,14 +386,13 @@ public class MatrixTest {
 
         Matrix result = Matrix.getColumnMatrix(values);
 
-        Matrix expected = new Matrix(new double[][]{
+        Assert.assertEquals(values.length, result.getRows());
+        Assert.assertEquals(new Matrix(new double[][]{
                 {1},
                 {2},
                 {3},
                 {4},
                 {5}
-        });
-
-        Assert.assertEquals(expected, result);
+        }), result);
     }
 }

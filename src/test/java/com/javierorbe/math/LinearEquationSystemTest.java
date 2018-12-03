@@ -70,8 +70,6 @@ public class LinearEquationSystemTest {
                 Matrix.getColumnMatrix(new double[] {1, 1, 5})
         );
 
-        System.out.println(system);
-
         Assert.assertEquals(LinearEquationSystem.LinearEquationSystemType.UNIQUE_SOLUTION, system.getType());
     }
 
