@@ -68,6 +68,10 @@ public class Vector2 {
         this.x = x;
     }
 
+    public void addX(double x) {
+        this.x += x;
+    }
+
     /**
      * Returns the value of the y coordinate.
      *
@@ -86,6 +90,10 @@ public class Vector2 {
         this.y = y;
     }
 
+    public void addY(double y) {
+        this.y += y;
+    }
+
     /**
      * Add the values of a vector to this vector.
      *
@@ -102,6 +110,44 @@ public class Vector2 {
     public void zero() {
         x = 0;
         y = 0;
+    }
+
+    public void multiply(double scalar) {
+        x *= scalar;
+        y *= scalar;
+    }
+
+    /**
+     * Returns the length of the vector squared.
+     * @return the length of the vector squared.
+     */
+    public double squareLength() {
+        return x * x + y * y;
+    }
+
+    /**
+     * Returns the length of the vector.
+     * @return the length of the vector.
+     */
+    public double length() {
+        return Math.sqrt(squareLength());
+    }
+
+    /**
+     * Normalizes the vector.
+     */
+    public void normalize() {
+        double len = length();
+        x /= len;
+        y /= len;
+    }
+
+    /**
+     * Randomizes the vector coordinates with values from 0 to 1.
+     */
+    public void randomize() {
+        x = Math.random();
+        y = Math.random();
     }
 
     /**
