@@ -1,9 +1,0 @@
-com\javierorbe\math\LinearEquationSystem.class
-com\javierorbe\math\LinearEquationSystem$LinearEquationSystemType.class
-com\javierorbe\math\Vector2.class
-com\javierorbe\math\Matrix$InverseFunction.class
-com\javierorbe\math\util\IntPair.class
-com\javierorbe\math\InvalidMatrixException.class
-com\javierorbe\math\Matrix.class
-com\javierorbe\math\InvalidLinearEquationSystemException.class
-com\javierorbe\math\util\MathUtils.class
