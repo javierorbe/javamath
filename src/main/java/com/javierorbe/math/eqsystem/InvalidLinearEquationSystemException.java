@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Javier Orbe
+ * Copyright (c) 2019 Javier Orbe
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package com.javierorbe.math;
+package com.javierorbe.math.eqsystem;
 
 /**
  * Thrown to indicate that the application has attempted to solve a linear equation

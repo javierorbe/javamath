@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Javier Orbe
+ * Copyright (c) 2019 Javier Orbe
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,16 +20,20 @@
  * SOFTWARE.
  */
 
-package com.javierorbe.math;
+package com.javierorbe.math.matrix;
 
 import com.javierorbe.math.util.IntPair;
 import com.javierorbe.math.util.MathUtils;
 
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static com.javierorbe.math.util.MathUtils.getPivotIndex;
+import static com.javierorbe.math.util.MathUtils.getSortedZeroCount;
 
 /**
  * Represents a mathematical matrix.
@@ -88,6 +92,16 @@ public class Matrix {
     }
 
     /**
+     * Returns {@code true} if the matrix is square.
+     * If the row count equals the column count, a matrix is square.
+     *
+     * @return {@code true} if the matrix is square, otherwise {@code false}.
+     */
+    public boolean isSquare() {
+        return rows == cols;
+    }
+
+    /**
      * Returns a copy of this matrix.
      *
      * @return a copy of this matrix.
@@ -119,6 +133,81 @@ public class Matrix {
     }
 
     /**
+     * Compares the specified object with this matrix for equality.
+     * Returns {@code true} if and only if the specified object is also a matrix,
+     * both matrices have the save size, and all corresponding elements in the two
+     * matrices are equal.
+     *
+     * @param o the object to be compared for equality with this matrix.
+     * @return {@code true} if the specified object is equal to this matrix, otherwise {@code false}.
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+
+        if (!(o instanceof Matrix)) {
+            return false;
+        }
+
+        Matrix m = (Matrix) o;
+
+        if (notSameSize(this, m)) {
+            return false;
+        }
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (Double.compare(values[row][col], m.values[row][col]) != 0) {
+                    if (values[row][col] != m.values[row][col]) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns a representation of this matrix.
+     *
+     * @return a string representation of this matrix.
+     */
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < rows; i++) {
+            builder.append("[");
+            for (int j = 0; j < cols; j++) {
+                String s = String.valueOf(values[i][j]);
+                s = !s.contains(".") ? s : s.replaceAll("0*$", "").replaceAll("\\.$", "");
+                builder.append(s).append(j < cols - 1 ? " " : "");
+            }
+
+            builder.append("]").append("\n");
+        }
+
+        return builder.toString();
+    }
+
+    public double[] getRow(int row) {
+        return values[row];
+    }
+
+    public double[] getColumn(int col) {
+        double[] column = new double[rows];
+
+        for (int row = 0; row < rows; row++) {
+            column[row] = values[row][col];
+        }
+
+        return column;
+    }
+
+    /**
      * Performs the given action for every element in the matrix.
      *
      * @param consumer the action to be performed for each element.
@@ -138,7 +227,18 @@ public class Matrix {
      */
     public void forEachRow(Consumer<double[]> consumer) {
         for (int row = 0; row < rows; row++) {
-            consumer.accept(values[row]);
+            consumer.accept(getRow(row));
+        }
+    }
+
+    /**
+     * Performs the given action for every column in the matrix.
+     *
+     * @param consumer the action to be performed for each column.
+     */
+    public void forEachColumn(Consumer<double[]> consumer) {
+        for (int col = 0; col < cols; col++) {
+            consumer.accept(getColumn(col));
         }
     }
 
@@ -149,9 +249,9 @@ public class Matrix {
      *                 Gets as a parameter the value of the element being applied.
      */
     public void map(Function<Double, Double> function) {
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                values[i][j] = function.apply(values[i][j]);
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                values[row][col] = function.apply(values[row][col]);
             }
         }
     }
@@ -194,14 +294,70 @@ public class Matrix {
     }
 
     /**
+     * Returns {@code true} if this matrix is an identity matrix.
+     *
+     * @return {@code true} if this matrix is an identity matrix, otherwise {@code false}.
+     * @exception InvalidMatrixException if the matrix is not square.
+     */
+    public boolean isIdentity() {
+        if (!isSquare()) {
+            throw new InvalidMatrixException("The matrix must be square.");
+        }
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (row == col) {
+                    if (values[row][col] != 1) {
+                        return false;
+                    }
+                } else if (values[row][col] != 0) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the identity matrix of a specific size.
+     *
+     * @param size the size of the identity matrix.
+     * @return the identity matrix of the specified size.
+     */
+    public static Matrix getIdentity(int size) {
+        Matrix result = new Matrix(size, size);
+
+        for (int i = 0; i < size; i++) {
+            result.values[i][i] = 1;
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns {@code true} if the matrix is a zero matrix.
+     *
+     * @return {@code true} if the matrix is a zero matrix, otherwise {@code false}.
+     * @see <a href="https://en.wikipedia.org/wiki/Zero_matrix" target="_top">Zero matrix in Wikipedia</a>
+     */
+    public boolean isZero() {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (values[row][col] != 0) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Randomizes the matrix values with values from 0 to 1.
      */
     public void randomize() {
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                values[i][j] = Math.random();
-            }
-        }
+        map(e -> Math.random());
     }
 
     /**
@@ -210,11 +366,7 @@ public class Matrix {
      * @param scalar the scalar
      */
     public void add(double scalar) {
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                values[i][j] += scalar;
-            }
-        }
+        map(e -> e + scalar);
     }
 
     /**
@@ -228,11 +380,7 @@ public class Matrix {
             throw new InvalidMatrixException("The two matrices must be the same size.");
         }
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                this.values[i][j] += matrix.get(i, j);
-            }
-        }
+        map((i, j) -> get(i, j) + matrix.get(i, j));
     }
 
     /**
@@ -249,13 +397,7 @@ public class Matrix {
         }
 
         Matrix result = new Matrix(a.rows, a.cols);
-
-        for (int i = 0; i < a.rows; i++) {
-            for (int j = 0; j < a.cols; j++) {
-                result.values[i][j] = a.values[i][j] - b.values[i][j];
-            }
-        }
-
+        result.map((i, j) -> a.get(i, j) - b.get(i, j));
         return result;
     }
 
@@ -265,11 +407,7 @@ public class Matrix {
      * @param scalar the number to multiply by the matrix
      */
     public void multiply(double scalar) {
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                this.values[i][j] *= scalar;
-            }
-        }
+        map(e -> e * scalar);
     }
 
     /**
@@ -284,12 +422,7 @@ public class Matrix {
         if (notSameSize(this, matrix)) {
             throw new InvalidMatrixException("The two matrices must be the same size.");
         }
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                values[i][j] *= matrix.values[i][j];
-            }
-        }
+        map((i, j) -> get(i, j) * matrix.get(i, j));
     }
 
     /**
@@ -326,6 +459,21 @@ public class Matrix {
     }
 
     /**
+     * Returns the n-power of a matrix.
+     *
+     * @param m the matrix.
+     * @param exp the exponent.
+     * @return the n-power of a matrix.
+     */
+    public static Matrix power(Matrix m, int exp) {
+        Matrix result = m.copy();
+        for (int i = 0; i < exp - 1; i++) {
+            result = Matrix.multiply(result, m);
+        }
+        return result;
+    }
+
+    /**
      * Returns the transpose of this matrix.
      *
      * @return the transposed matrix.
@@ -333,13 +481,7 @@ public class Matrix {
      */
     public Matrix transpose() {
         Matrix result = new Matrix(cols, rows);
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                result.values[j][i] = values[i][j];
-            }
-        }
-
+        result.map((i, j) -> get(j, i));
         return result;
     }
 
@@ -366,7 +508,7 @@ public class Matrix {
                     continue;
                 }
 
-                submatrix.set(i, j, this.get(row, col));
+                submatrix.set(i, j, get(row, col));
                 j++;
             }
 
@@ -375,76 +517,6 @@ public class Matrix {
         }
 
         return submatrix;
-    }
-
-    /**
-     * Returns {@code true} if the matrix is square.
-     * If the row count equals the column count, a matrix is square.
-     *
-     * @return {@code true} if the matrix is square, otherwise {@code false}.
-     */
-    public boolean isSquare() {
-        return rows == cols;
-    }
-
-    /**
-     * Returns {@code true} if this matrix is an identity matrix.
-     *
-     * @return {@code true} if this matrix is an identity matrix, otherwise {@code false}.
-     * @exception InvalidMatrixException if the matrix is not square.
-     */
-    public boolean isIdentity() {
-        if (!isSquare()) {
-            throw new InvalidMatrixException("The matrix must be square.");
-        }
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if (i == j) {
-                    if (values[i][j] != 1) {
-                        return false;
-                    }
-                } else if (values[i][j] != 0) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Get the identity matrix of a specific size.
-     *
-     * @param size the size of the identity matrix.
-     * @return the identity matrix of the specified size.
-     */
-    public static Matrix getIdentity(int size) {
-        Matrix result = new Matrix(size, size);
-
-        for (int i = 0; i < size; i++) {
-            result.values[i][i] = 1;
-        }
-
-        return result;
-    }
-
-    /**
-     * Returns {@code true} if the matrix is a zero matrix.
-     *
-     * @return {@code true} if the matrix is a zero matrix, otherwise {@code false}.
-     * @see <a href="https://en.wikipedia.org/wiki/Zero_matrix" target="_top">Zero matrix in Wikipedia</a>
-     */
-    public boolean isZero() {
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if (values[i][j] != 0) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -463,7 +535,7 @@ public class Matrix {
      * @return the inverse of this matrix.
      */
     public Matrix getInverse(InverseFunction inverseFunction) {
-        return inverseFunction.function.apply(this);
+        return inverseFunction.getFunction().apply(this);
     }
 
     /**
@@ -679,28 +751,6 @@ public class Matrix {
     }
 
     /**
-     * Get the index of the pivot in a row.
-     * The pivot is the first none zero element.
-     *
-     * @param row the row.
-     * @return the index of the pivot if there is, otherwise {@code -1}.
-     */
-    private static int getPivotIndex(double[] row) {
-        int pivotIndex = -1;
-
-        for (int i = 0; i < row.length; i++) {
-            if (row[i] != 0) {
-                pivotIndex = i;
-                break;
-            }
-        }
-
-        return pivotIndex;
-    }
-
-    // TODO: calcular el rango de una matriz mediante el determinante
-
-    /**
      * Returns the range of this matrix.
      *
      * @return the range of this matrix.
@@ -725,85 +775,6 @@ public class Matrix {
         }
 
         return nonZero;
-    }
-
-    /**
-     * Convert a column matrix to an array.
-     *
-     * @return an array with the values of the matrix.
-     * @exception InvalidMatrixException if the matrix is not a column matrix.
-     */
-    public double[] toArray() {
-        if (cols != 1) {
-            throw new InvalidMatrixException("The matrix must only have a column.");
-        }
-
-        double[] result = new double[rows];
-
-        for (int i = 0; i < rows; i++) {
-            result[i] = values[i][0];
-        }
-
-        return result;
-    }
-
-    /**
-     * Compares the specified object with this matrix for equality.
-     * Returns {@code true} if and only if the specified object is also a matrix,
-     * both matrices have the save size, and all corresponding elements in the two
-     * matrices are equal.
-     *
-     * @param o the object to be compared for equality with this matrix.
-     * @return {@code true} if the specified object is equal to this matrix, otherwise {@code false}.
-     */
-    @Override
-    public boolean equals(Object o) {
-        if (o == this) {
-            return true;
-        }
-
-        if (!(o instanceof Matrix)) {
-            return false;
-        }
-
-        Matrix m = (Matrix) o;
-
-        if (notSameSize(this, m)) {
-            return false;
-        }
-
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                if (Double.compare(values[row][col], m.values[row][col]) != 0) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Returns a representation of this matrix.
-     *
-     * @return a string representation of this matrix.
-     */
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < rows; i++) {
-            builder.append("[");
-            for (int j = 0; j < cols; j++) {
-                String s = String.valueOf(values[i][j]);
-                s = !s.contains(".") ? s : s.replaceAll("0*$", "").replaceAll("\\.$", "");
-                builder.append(s).append(j < cols - 1 ? " " : "");
-            }
-
-            builder.append("]").append("\n");
-        }
-
-        return builder.toString();
     }
 
     /**
@@ -847,6 +818,26 @@ public class Matrix {
     }
 
     /**
+     * Convert a column matrix to an array.
+     *
+     * @return an array with the values of the matrix.
+     * @exception InvalidMatrixException if the matrix is not a column matrix.
+     */
+    public double[] toArray() {
+        if (cols != 1) {
+            throw new InvalidMatrixException("The matrix must only have a column.");
+        }
+
+        double[] result = new double[rows];
+
+        for (int row = 0; row < rows; row++) {
+            result[row] = values[row][0];
+        }
+
+        return result;
+    }
+
+    /**
      * Create a column matrix from an array.
      *
      * @param columnValues values for the matrix.
@@ -865,134 +856,5 @@ public class Matrix {
         }
 
         return new Matrix(values);
-    }
-
-    /**
-     * Functions that calculate the inverse of a matrix.
-     *
-     * @see <a href="https://en.wikipedia.org/wiki/Invertible_matrix" target="_top">Invertible matrix in Wikipedia</a>
-     */
-    public enum InverseFunction {
-        /**
-         * Calculate the inverse of a matrix using adjugates.
-         */
-        ADJUGATES((matrix) -> {
-            if (!matrix.isInvertible()) {
-                throw new InvalidMatrixException("The matrix must be invertible.");
-            }
-
-            Matrix result = matrix.getAdjugate().transpose();
-            result.multiply((1 / matrix.getDeterminant()));
-
-            return result;
-        }),
-
-        /**
-         * Calculate the inverse of a matrix using the Gauss method.
-         */
-        GAUSS((matrix) -> {
-            if (!matrix.isInvertible()) {
-                throw new InvalidMatrixException("The matrix must be invertible.");
-            }
-
-            Matrix initial = matrix.copy();
-            Matrix identity = Matrix.getIdentity(matrix.rows);
-
-            // Order the rows in descending order by the amount of zeroes in the first elements until the first non zero element.
-            List<Map.Entry<Integer, Integer>> sorted = getSortedZeroCount(initial);
-            double[][] sortedValues = new double[initial.rows][initial.cols];
-            double[][] identitySwapValues = new double[identity.rows][identity.cols];
-            for (int i = 0; i < sorted.size(); i++) {
-                int row = sorted.get(i).getKey();
-                sortedValues[i] = initial.values[row];
-                identitySwapValues[i] = identity.values[row];
-            }
-            initial.values = sortedValues;
-            identity.values = identitySwapValues;
-
-            // Go through all the rows
-            for (int row = 0; row < initial.rows; row++) {
-                int pivotIndex = getPivotIndex(initial.values[row]);
-
-                // If all the elements in the row are zeroes, it means that the matrix is a zero matrix.
-                if (pivotIndex == -1) {
-                    return initial;
-                }
-
-                // Set the pivot to 1 (multiplying the row by the inverse of the pivot).
-                double scalar = 1 / initial.values[row][pivotIndex];
-                initial.multiplyRow(row, scalar);
-                identity.multiplyRow(row, scalar);
-
-                // Set all the elements below the pivot to zero
-                for (int k = row + 1; k < initial.rows; k++) {
-                    scalar = initial.values[k][pivotIndex];
-                    initial.subtractRow(k, row, scalar);
-                    identity.subtractRow(k, row, scalar);
-                }
-
-                // Set all the elements above the pivot to zero
-                for (int k = 0; k < row; k++) {
-                    scalar = initial.values[k][pivotIndex];
-                    initial.subtractRow(k, row, scalar);
-                    identity.subtractRow(k, row, scalar);
-                }
-            }
-
-            return identity;
-        })
-        ;
-
-        /**
-         * The default method for getting the inverse of a matrix.
-         */
-        public static final InverseFunction DEFAULT = InverseFunction.ADJUGATES;
-
-        private Function<Matrix, Matrix> function;
-
-        InverseFunction(Function<Matrix, Matrix> function) {
-            this.function = function;
-        }
-    }
-
-    /**
-     * Sort a map entry list in ascending order by its values.
-     *
-     * @param map the map to sort.
-     * @param <K> key type.
-     * @param <V> value type.
-     * @return a sorted list of map entries.
-     */
-    private static <K, V extends Comparable<? super V>> List<Map.Entry<K, V>> entriesSortedByValues(Map<K, V> map) {
-        List<Map.Entry<K, V>> sortedEntries = new ArrayList<>(map.entrySet());
-        sortedEntries.sort(Comparator.comparing(Map.Entry::getValue));
-        return sortedEntries;
-    }
-
-    /**
-     * Get the sorted list of map entries with keys as column indices of the matrix and as values
-     * the amount of zeroes in the first elements of that column until the first none zero element.
-     *
-     * @param matrix the matrix.
-     * @return the sorted list.
-     */
-    private static List<Map.Entry<Integer, Integer>> getSortedZeroCount(Matrix matrix) {
-        Map<Integer, Integer> zeroCount = new HashMap<>();
-        for (int row = 0; row < matrix.rows; row++) {
-            zeroCount.put(row, 0);
-
-            for (int col = 0; col < matrix.cols; col++) {
-                double element = matrix.values[row][col];
-
-                if (element == 0) {
-                    zeroCount.put(row, zeroCount.get(row) + 1);
-                } else {
-                    break;
-                }
-            }
-        }
-
-        // Order the rows in descending order by the amount of zeroes in the first elements until the first non zero element.
-        return entriesSortedByValues(zeroCount);
     }
 }

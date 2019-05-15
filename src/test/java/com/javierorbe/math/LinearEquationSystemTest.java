@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Javier Orbe
+ * Copyright (c) 2019 Javier Orbe
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 
 package com.javierorbe.math;
 
+import com.javierorbe.math.eqsystem.LinearEquationSystem;
+import com.javierorbe.math.matrix.Matrix;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -30,8 +32,6 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import static org.junit.Assert.*;
 
 @RunWith(Arquillian.class)
 public class LinearEquationSystemTest {

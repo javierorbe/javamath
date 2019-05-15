@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Javier Orbe
+ * Copyright (c) 2019 Javier Orbe
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 
 package com.javierorbe.math;
 
+import com.javierorbe.math.matrix.InverseFunction;
+import com.javierorbe.math.matrix.Matrix;
 import com.javierorbe.math.util.MathUtils;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -32,10 +34,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
-
-import static org.junit.Assert.*;
-
 @RunWith(Arquillian.class)
 public class MatrixTest {
 
@@ -44,22 +42,6 @@ public class MatrixTest {
         return ShrinkWrap.create(JavaArchive.class)
                 .addClass(Matrix.class)
                 .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
-    }
-
-    @Test
-    public void copy() {
-    }
-
-    @Test
-    public void map() {
-    }
-
-    @Test
-    public void map1() {
-    }
-
-    @Test
-    public void map2() {
     }
 
     @Test
@@ -103,26 +85,80 @@ public class MatrixTest {
 
     @Test
     public void subtract() {
+        Matrix a = new Matrix(new double[][]{
+                {-3, 2, 1},
+                {1,  0, 2},
+                {3,  4, 5}
+        });
+        Matrix b = new Matrix(new double[][]{
+                {-3, 6, -3},
+                {3,  -4, -1},
+                {-2,  4,  6}
+        });
+
+        Matrix expected = new Matrix(new double[][] {
+                {0, -4, 4},
+                {-2, 4, 3},
+                {5, 0, -1}
+        });
+
+        Matrix result = Matrix.subtract(a, b);
+
+        Assert.assertEquals(expected, result);
     }
 
     @Test
-    public void multiply() {
+    public void multiplyScalar() {
+        Matrix a = new Matrix(new double[][]{
+                {1, 2, 3},
+                {-2,  -3, -1},
+                {10, 400, 50}
+        });
+
+        int scalar = -2;
+
+        Matrix expected = new Matrix(new double[][]{
+                {-2, -4, -6},
+                {4,  6, 2},
+                {-20, -800, -100}
+        });
+
+        a.multiply(scalar);
+
+        Assert.assertEquals(expected, a);
     }
 
     @Test
-    public void multiply1() {
+    public void multiplyMatrixHadamard() {
+        Matrix a = new Matrix(new double[][]{
+                {-3, 2, 1},
+                {1,  0, 2},
+                {3,  4, 5}
+        });
+        Matrix b = new Matrix(new double[][]{
+                {-3, 6, -3},
+                {3,  -4, -1},
+                {-2,  4,  6}
+        });
+
+        Matrix expected = new Matrix(new double[][] {
+                {9, 12, -3},
+                {3, 0, -2},
+                {-6, 16, 30}
+        });
+
+        a.multiply(b);
+
+        Assert.assertEquals(expected, a);
     }
 
     @Test
-    public void multiply2() {
+    public void multiplyMatrices() {
+
     }
 
     @Test
     public void subtractRow() {
-    }
-
-    @Test
-    public void subtractRow1() {
     }
 
     @Test
@@ -269,6 +305,22 @@ public class MatrixTest {
 
     @Test
     public void getInverse() {
+        Matrix a = new Matrix(new double[][]{
+                {1, 1, 0},
+                {1, 0, 1},
+                {0, 1, 0}
+        });
+
+        Matrix expected = new Matrix(new double[][]{
+                {1, 0, -1},
+                {0, 0, 1},
+                {-1, 1, 1}
+        });
+
+        for (InverseFunction function : InverseFunction.values()) {
+            Matrix result = a.getInverse(function);
+            Assert.assertEquals(expected, result);
+        }
     }
 
     @Test
@@ -293,15 +345,21 @@ public class MatrixTest {
 
     @Test
     public void getAdjugateMatrix() {
+        Matrix a = new Matrix(new double[][]{
+                {1, 2, 3},
+                {3, 2, 1},
+                {1, 0, 1}
+        });
 
-    }
+        Matrix expected = new Matrix(new double[][]{
+                {2, -2, -2},
+                {-2, -2, 2},
+                {-4, 8, -4}
+        });
 
-    @Test
-    public void solveSystem() {
-    }
+        Matrix result = a.getAdjugate();
 
-    @Test
-    public void solveSystemByCramer() {
+        Assert.assertEquals(expected, result);
     }
 
     @Test
@@ -334,11 +392,18 @@ public class MatrixTest {
     }
 
     @Test
-    public void getDeterminant() {
-    }
-
-    @Test
     public void getDeterminantByLaplace() {
+        Matrix a = new Matrix(new double[][]{
+                {2, 3, 3, 6},
+                {2,  3, 6, 7},
+                {4,  82, 0, 3},
+                {2, 23, 2, 3}
+        });
+
+        double expected = 376;
+        double result = Matrix.getDeterminantByLaplace(a);
+
+        Assert.assertEquals(0, Double.compare(expected, result));
     }
 
     @Test

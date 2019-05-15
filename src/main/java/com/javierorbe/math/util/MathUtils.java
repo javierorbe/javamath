@@ -22,8 +22,9 @@
 
 package com.javierorbe.math.util;
 
-import java.util.Arrays;
-import java.util.Random;
+import com.javierorbe.math.matrix.Matrix;
+
+import java.util.*;
 
 /**
  * Util math functions.
@@ -94,6 +95,26 @@ public final class MathUtils {
 	}
 
 	/**
+	 * Returns a number whose value is limited to the given range.
+	 *
+	 * @param number the value.
+	 * @param min minimum value.
+	 * @param max maximum value.
+	 * @return the value limited to the range.
+	 */
+	public static double clamp(double number, double min, double max) {
+		if (number > max) {
+			return max;
+		}
+
+		if (number < min) {
+			return min;
+		}
+
+		return number;
+	}
+
+	/**
 	 * Returns a deep copy of a two-dimensional array.
 	 *
 	 * @param arr the array to copy.
@@ -122,5 +143,66 @@ public final class MathUtils {
 	public static String trimZeroes(double number) {
 		String s = String.valueOf(number);
 		return !s.contains(".") ? s : s.replaceAll("0*$", "").replaceAll("\\.$", "");
+	}
+
+	/**
+	 * Sort a map entry list in ascending order by its values.
+	 *
+	 * @param map the map to sort.
+	 * @param <K> key type.
+	 * @param <V> value type.
+	 * @return a sorted list of map entries.
+	 */
+	public static <K, V extends Comparable<? super V>> List<Map.Entry<K, V>> entriesSortedByValues(Map<K, V> map) {
+		List<Map.Entry<K, V>> sortedEntries = new ArrayList<>(map.entrySet());
+		sortedEntries.sort(Comparator.comparing(Map.Entry::getValue));
+		return sortedEntries;
+	}
+
+	/**
+	 * Get the sorted list of map entries with keys as column indices of the matrix and as values
+	 * the amount of zeroes in the first elements of that column until the first none zero element.
+	 *
+	 * @param matrix the matrix.
+	 * @return the sorted list.
+	 */
+	public static List<Map.Entry<Integer, Integer>> getSortedZeroCount(Matrix matrix) {
+		Map<Integer, Integer> zeroCount = new HashMap<>();
+		for (int row = 0; row < matrix.getRows(); row++) {
+			zeroCount.put(row, 0);
+
+			for (int col = 0; col < matrix.getColumns(); col++) {
+				double element = matrix.get(row, col);
+
+				if (element == 0) {
+					zeroCount.put(row, zeroCount.get(row) + 1);
+				} else {
+					break;
+				}
+			}
+		}
+
+		// Order the rows in descending order by the amount of zeroes in the first elements until the first non zero element.
+		return entriesSortedByValues(zeroCount);
+	}
+
+	/**
+	 * Get the index of the pivot in a row.
+	 * The pivot is the first none zero element.
+	 *
+	 * @param row the row.
+	 * @return the index of the pivot if there is, otherwise {@code -1}.
+	 */
+	public static int getPivotIndex(double[] row) {
+		int pivotIndex = -1;
+
+		for (int i = 0; i < row.length; i++) {
+			if (row[i] != 0) {
+				pivotIndex = i;
+				break;
+			}
+		}
+
+		return pivotIndex;
 	}
 }
